@@ -34,6 +34,10 @@ class MainClientGUI(QWidget):
         read_button.clicked.connect(self.read_email)
         layout.addWidget(read_button)
 
+        read_button = QPushButton('Удалить письмо')
+        read_button.clicked.connect(self.delete_email)
+        layout.addWidget(read_button)
+
         send_layout = QHBoxLayout()
         self.to_line = QLineEdit()
         self.to_line.setPlaceholderText('Кому')
@@ -87,6 +91,19 @@ class MainClientGUI(QWidget):
                 self.email_content.setPlainText(content)
             except Exception as e:
                 QMessageBox.warning(self, 'Ёмоё', f'Не удалось прочитать письмо: {str(e)}')
+
+    def delete_email(self):
+        selected_item = self.email_list.currentItem()
+        if selected_item:
+            try:
+                email_id = selected_item.text().split(",")[0].split(":")[1].strip().replace(
+                    'b', "").strip('\'')
+                folder = self.folder_combo.currentText()
+
+                self.client.delete_email(folder, email_id)
+                self.email_list.takeItem(self.email_list.row(selected_item))
+            except Exception as e:
+                QMessageBox.warning(self, 'Ёмоё', f'Не удалось удалить письмо: {str(e)}')
 
     def send_email(self):
         to_address = self.to_line.text()

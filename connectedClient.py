@@ -142,6 +142,37 @@ class ConnectedClient:
             self.mail.append(self.coded_encoded["Отправленные"], None,
                              imaplib.Time2Internaldate(time.time()), msg.as_bytes())
 
+    def delete_email(self, folder, email_id):
+        email_id = email_id.strip()
+
+        if folder not in ALPHABET[0]:
+            folder = self.coded_encoded.get(folder, folder)
+
+        trash_folder = self.coded_encoded.get("Корзина", None)
+        if not trash_folder:
+            QMessageBox.warning(self.widget, "Ёмоё", "Папка 'Корзина' не найдена")
+            return
+
+        status, _ = self.mail.select(folder)
+        if status != "OK":
+            QMessageBox.warning(self.widget, 'Ёмоё', f'Не удалось выбрать папку для удаления')
+            return
+
+        try:
+            result = self.mail.copy(email_id, trash_folder)
+            if result[0] != "OK":
+                QMessageBox.warning(self.widget, "Ёмоё", f"Не удалось переместить письмо {email_id} в 'Корзина'")
+                return
+
+            status, _ = self.mail.store(email_id, '+FLAGS', '\\Deleted')
+            if status == "OK":
+                self.mail.expunge()
+                QMessageBox.information(self.widget, "Ура", f"Письмо {email_id} успешно перемещено в 'Корзина'")
+            else:
+                QMessageBox.warning(self.widget, "Ёмоё", f"Не удалось пометить письмо {email_id} как удалённое")
+        except Exception as e:
+            QMessageBox.warning(self.widget, "Ёмоё", f"Произошла ошибка при перемещении: {str(e)}")
+
     def logout(self):
         if self.mail:
             self.mail.logout()
