@@ -1,6 +1,7 @@
 from PyQt5.QtWidgets import (QWidget, QLineEdit, QPushButton, QMessageBox, QFormLayout)
 from connectedClient import ConnectedClient
 from mainClientGUI import MainClientGUI
+import traceback
 
 
 class RegisterGUI(QWidget):
@@ -42,4 +43,4 @@ class RegisterGUI(QWidget):
             self.main_window.show()
             self.close()
         except Exception as e:
-            QMessageBox.warning(self, 'Ошибка', f'Не удалось подключиться: {str(e)}')
+            QMessageBox.warning(self, 'Ошибка', f'Не удалось подключиться: {traceback.format_exception(e)}')

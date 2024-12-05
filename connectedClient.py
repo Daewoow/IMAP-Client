@@ -39,7 +39,10 @@ class ConnectedClient:
                 flags, delimiter, mailbox_name = mailbox_info.split(maxsplit=2)
                 if isinstance(mailbox_name, bytes):
                     mailbox_name = mailbox_name.decode('utf-8')
-                decoded_mailbox_name = Utils.decode_imap_folder_name(mailbox_name)
+                if self.server == 'imap.gmail.com':
+                    decoded_mailbox_name = Utils.gmail_codings[mailbox_name.split("\" \"")[-1].strip("\"")]
+                else:
+                    decoded_mailbox_name = Utils.decode_imap_folder_name(mailbox_name)
                 self.coded_encoded[decoded_mailbox_name] = mailbox_name
             with open("coded_folders.pkl", "wb") as table:
                 pickle.dump(self.coded_encoded, table)
@@ -47,8 +50,18 @@ class ConnectedClient:
             QMessageBox.warning(self.widget, 'Ёмоё', f'Не удалось получить список ящиков')
 
     def fetch_emails(self, folder):
-        if folder[0] not in ALPHABET[0]:
-            folder = self.coded_encoded[folder]
+        if self.server == "imap.gmail.com":
+            try:
+                print(folder)
+                for k, v in Utils.gmail_codings.items():
+                    if v == folder:
+                        folder = k[8:]
+                print(folder)
+            except KeyError:
+                folder = folder
+        else:
+            if folder not in ALPHABET[0]:
+                folder = self.coded_encoded.get(folder, folder)
 
         status, _ = self.mail.select(folder)
         if status != "OK":
@@ -66,8 +79,18 @@ class ConnectedClient:
     def read_email(self, folder, email_id):
         email_id = email_id.strip()
 
-        if folder not in ALPHABET[0]:
-            folder = self.coded_encoded.get(folder, folder)
+        if self.server == "imap.gmail.com":
+            try:
+                print(folder)
+                for k, v in Utils.gmail_codings.items():
+                    if v == folder:
+                        folder = k[8:]
+                print(folder)
+            except KeyError:
+                folder = folder
+        else:
+            if folder not in ALPHABET[0]:
+                folder = self.coded_encoded.get(folder, folder)
 
         status, _ = self.mail.select(folder)
         if status != "OK":
@@ -145,13 +168,26 @@ class ConnectedClient:
     def delete_email(self, folder, email_id):
         email_id = email_id.strip()
 
-        if folder not in ALPHABET[0]:
-            folder = self.coded_encoded.get(folder, folder)
+        trash_folder = None
 
-        trash_folder = self.coded_encoded.get("Корзина", None)
-        if not trash_folder:
-            QMessageBox.warning(self.widget, "Ёмоё", "Папка 'Корзина' не найдена")
-            return
+        if self.server == "imap.gmail.com":
+            try:
+                print(folder)
+                for k, v in Utils.gmail_codings.items():
+                    if v == folder:
+                        folder = k[8:]
+                print(folder)
+            except KeyError:
+                folder = folder
+        else:
+            if folder not in ALPHABET[0]:
+                folder = self.coded_encoded.get(folder, folder)
+
+        if self.server == "imap.mail.ru":
+            trash_folder = self.coded_encoded.get("Корзина", None)
+            if not trash_folder:
+                QMessageBox.warning(self.widget, "Ёмоё", "Папка 'Корзина' не найдена")
+                return
 
         status, _ = self.mail.select(folder)
         if status != "OK":
@@ -159,10 +195,11 @@ class ConnectedClient:
             return
 
         try:
-            result = self.mail.copy(email_id, trash_folder)
-            if result[0] != "OK":
-                QMessageBox.warning(self.widget, "Ёмоё", f"Не удалось переместить письмо {email_id} в 'Корзина'")
-                return
+            if trash_folder:
+                result = self.mail.copy(email_id, trash_folder)
+                if result[0] != "OK":
+                    QMessageBox.warning(self.widget, "Ёмоё", f"Не удалось переместить письмо {email_id} в 'Корзина'")
+                    return
 
             status, _ = self.mail.store(email_id, '+FLAGS', '\\Deleted')
             if status == "OK":

@@ -3,6 +3,18 @@ import pickle
 
 
 class Utils:
+    gmail_codings = {
+        "INBOX": "INBOX",
+        "[Gmail]": "[Gmail]",
+        "[Gmail]/&BBIEMAQ2BD0EPgQ1-": "[Gmail]/Важное",
+        "[Gmail]/&BBIEQQRP- &BD8EPgRHBEIEMA-": "[Gmail]/Все письма",
+        "[Gmail]/&BBoEPgRABDcEOAQ9BDA-": "[Gmail]/Корзина",
+        "[Gmail]/&BB4EQgQ,BEAEMAQyBDsENQQ9BD0ESwQ1-": "[Gmail]/Отправленные",
+        "[Gmail]/&BB8EPgQ8BDUERwQ1BD0EPQRLBDU-": "[Gmail]/Помеченные",
+        "[Gmail]/&BCEEPwQwBDw-": "[Gmail]/Спам",
+        "[Gmail]/&BCcENQRABD0EPgQyBDgEOgQ4-": "[Gmail]/Черновики"
+    }
+
     @staticmethod
     def encode_imap_folder_name(folder_name):
         utf16_bytes = folder_name.encode("utf-16-be")
